@@ -1,0 +1,133 @@
+#!/usr/bin/env python
+import argparse
+import sys
+import models
+import heapq
+import io
+from collections import namedtuple, defaultdict
+
+Hypothesis = namedtuple('Hypothesis', 'logprob, from_src_pos, to_src_pos, tgt_phrase, left_child, right_child')
+Node = namedtuple('Node', 'from_src_pos, to_src_pos, hyps')
+
+parser = argparse.ArgumentParser(description='Simple phrase based decoder.')
+parser.add_argument('-i', '--input', dest='input', default='data/input', help='File containing sentences to translate (default=data/input)')
+parser.add_argument('-o', '--output', dest='output', default='data/output', help='File containing sentences to translate (default=data/output)')
+parser.add_argument('-t', '--translation-model', dest='tm', default='data/tm', help='File containing translation model (default=data/tm)')
+parser.add_argument('-s', '--stack-size', dest='s', default=1, type=int, help='Maximum stack size (default=1)')
+parser.add_argument('-kbest', '--kbest', dest='kbest', default=1, type=int, help='size of the kbest list')
+parser.add_argument('-n', '--num_sentences', dest='num_sents', default=sys.maxint, type=int, help='Number of sentences to decode (default=no limit)')
+parser.add_argument('-l', '--language-model', dest='lm', default='data/lm', help='File containing ARPA-format language model (default=data/lm)')
+parser.add_argument('-v', '--verbose', dest='verbose', action='store_true', default=False, help='Verbose mode (default=off)')
+opts = parser.parse_args()
+
+def draw(f, tree):
+  UNIT_WIDTH = 6
+  for span_len in reversed(range(1, len(f)+1)):
+    sys.stderr.write(u'len={0} '.format(span_len))
+    for i in range(span_len*UNIT_WIDTH/2):
+      sys.stderr.write(u' ')
+    for from_src_pos in range(0, len(f)-span_len+1):
+      sys.stderr.write(u' /{0}\ '.format(len(tree[(from_src_pos, from_src_pos + span_len)].hyps)))
+    sys.stderr.write(u'\n\n\n')
+  
+
+def extract_phrase_bag(f, hyp, pieces):
+  if hyp.tgt_phrase != None:
+#    pieces.append(' '.join(f[hyp.from_src_pos:hyp.to_src_pos]))
+    pieces.append(hyp.tgt_phrase)
+    return
+  extract_phrase_bag(f, hyp.left_child, pieces)
+  extract_phrase_bag(f, hyp.right_child, pieces)
+
+tm = models.TM(opts.tm, sys.maxint)
+lm = models.LM(opts.lm)
+sys.stderr.write('Decoding %s...\n' % (opts.input,))
+input_sents = [tuple(line.strip().split()) for line in io.open(opts.input, encoding='utf8').readlines()[:opts.num_sents]]
+output_file = io.open(opts.output, encoding='utf8', mode='w')
+
+sent_counter = 0
+for f in input_sents:
+
+  sys.stderr.write(u'\n===========================================================================================\n')
+  sys.stderr.write(u'now processing sent # {0}: {1}\n\n'.format(sent_counter, ' '.join(f)))
+    
+  # create a dictionary that maps (from_src_pos,to_src_pos) pairs to the corresponding Node
+  tree = defaultdict(Node)
+    
+  # process lower cells first
+  for span_len in range(1, len(f)+1):
+    # process cells left to right
+    sys.stderr.write(u'processing span length {0}\n'.format(span_len))
+    for from_src_pos in range(0, len(f)-span_len+1):
+      # now, create the cell
+      to_src_pos = from_src_pos+span_len
+      sys.stderr.write(u'processing cell tree[({0}, {1})]...'.format(from_src_pos, to_src_pos))
+      tree[(from_src_pos, to_src_pos)] = Node(from_src_pos=from_src_pos, to_src_pos=to_src_pos, hyps=[])
+
+      # TODO: this creates empty list for all possible src spans. bad. 
+      # instead, check first whether the key exists in tm.
+      # also, consider making tm a dictionary instead of a defaultdict
+      
+      # add phrase pairs to the hypotheses
+      for phrase in tm[f[from_src_pos:to_src_pos]]:
+        tree[(from_src_pos, to_src_pos)].hyps.append( Hypothesis(logprob=phrase.logprob, 
+                                                                 from_src_pos=from_src_pos,
+                                                                 to_src_pos=to_src_pos,
+                                                                 tgt_phrase=phrase.english, 
+                                                                 left_child=None, 
+                                                                 right_child=None))
+        
+      # add an oov translation if necessary
+      if span_len == 1 and len(tree[(from_src_pos, to_src_pos)].hyps) == 0:
+        tree[(from_src_pos, to_src_pos)].hyps.append( Hypothesis(logprob=-300, 
+                                                                 from_src_pos=from_src_pos,
+                                                                 to_src_pos=to_src_pos,
+                                                                 tgt_phrase=f[from_src_pos],
+                                                                 left_child=None,
+                                                                 right_child=None))
+
+      # find the kbest synthetic hypotheses
+      synthetic_logprobs = set()
+      for mid_src_pos in range(from_src_pos + 1, to_src_pos):
+        # for every way the current span can be split
+        for left_hyp in tree[(from_src_pos, mid_src_pos)].hyps:
+          for right_hyp in tree[(mid_src_pos, to_src_pos)].hyps:
+            # consider all combinations 
+            # TODO: you can stop after greedily combining kBEST hyps 
+            new_hyp = Hypothesis(logprob=left_hyp.logprob+right_hyp.logprob,
+                                 from_src_pos=from_src_pos,
+                                 to_src_pos=to_src_pos,
+                                 tgt_phrase=None,
+                                 left_child=left_hyp,
+                                 right_child=right_hyp)
+            # TODO: it's a very bad practice to compare floating point numbers this way. 
+            # TODO: also, we shouldn't rely on the logprob to determine hypotheses similarity
+            if new_hyp.logprob not in synthetic_logprobs:
+              tree[(from_src_pos, to_src_pos)].hyps.append(new_hyp)
+              synthetic_logprobs.add(new_hyp.logprob)
+            
+      # now sort and prune
+      tree[(from_src_pos, to_src_pos)].hyps.sort(reverse=True)
+      sys.stderr.write(u'created {0} hyps before pruning...'.format( len(tree[(from_src_pos, to_src_pos)].hyps) ))
+      del tree[(from_src_pos, to_src_pos)].hyps[opts.kbest:]
+      sys.stderr.write(u'{0} hyps left after pruning.\n'.format( len(tree[(from_src_pos, to_src_pos)].hyps) ))
+    # finished processing all cells with span_len
+  # finished processing all spans
+  
+  # print tree
+  draw(f, tree)
+
+  # now, spit out the kbest bag-of-phrase translations
+  sys.stderr.write(u'{0}-best translations:\n'.format(opts.kbest))
+  for hyp in tree[(0, len(f))].hyps:
+    pieces = []
+    extract_phrase_bag(f, hyp, pieces)
+    bof_translation = u'{0} ||| {1} ||| {2}\n'.format(sent_counter, hyp.logprob, ' ||| '.join(pieces))
+    output_file.write(bof_translation)
+    sys.stderr.write(bof_translation)
+  
+  # advnce sent_counter
+  sent_counter += 1
+
+# close output file
+output_file.close()
