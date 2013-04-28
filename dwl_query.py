@@ -8,10 +8,10 @@ from dwl import get_dev_test_dicts, get_train_dicts
 #Make sure the parameters here are excetly the same as
 #in the training file
 
-FREQ_CUTOFF = 0
-TRAIN_FILE = 'data/test'
-DEV_FILE = 'data/test'
-TEST_FILE = 'data/test'
+FREQ_CUTOFF = 1
+TRAIN_FILE = 'data/news-commentary-v8.fr-en.joint.filt'
+DEV_FILE = 'data/newstest2011.fr.mixed'
+TEST_FILE = 'data/newstest2012.fr.mixed'
 MODELS_DIR = 'data/models/'
 
 trainSrcDict, trainTgtDict = get_train_dicts(TRAIN_FILE)
