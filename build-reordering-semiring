@@ -1,0 +1,1 @@
+clang -x c++ -std=c++11 -O3 test.cc -o test -lstdc++ -lfst -ldl
