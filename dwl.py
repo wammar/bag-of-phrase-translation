@@ -9,10 +9,14 @@ from scipy.sparse import coo_matrix, vstack
 from collections import Counter
 from sklearn.linear_model import LogisticRegression
 
-FREQ_CUTOFF = 5
+FREQ_CUTOFF = 1
+TRAIN_FILE = 'data/news-commentary-v8.fr-en.joint.filt'
+DEV_FILE = 'data/newstest2011.fr.mixed'
+TEST_FILE = 'data/newstest2012.fr.mixed'
+
 NUM_PROC = 5
 
-global X, devAndTestSrcDict, sizeTrData, trainFile
+global X, devAndTestSrcDict, sizeTrData
 
 def get_dev_test_dicts(fileName):
     
@@ -58,12 +62,12 @@ def get_numlines(fileName):
 
 def set_src_feat_vector():
     
-    global X, sizeTrData, devAndTestSrcDict, trainFile
+    global X, sizeTrData, devAndTestSrcDict, TRAIN_FILE
     
-    sizeTrData = get_numlines(trainFile)
+    sizeTrData = get_numlines(TRAIN_FILE)
     X1 = numpy.zeros((math.ceil(sizeTrData/2), len(devAndTestSrcDict)), dtype=int)
     
-    for numLine, line in enumerate(open(trainFile, 'r')):
+    for numLine, line in enumerate(open(TRAIN_FILE, 'r')):
         
         if numLine == math.ceil(sizeTrData/2):
             break
@@ -76,7 +80,7 @@ def set_src_feat_vector():
     X1 = coo_matrix(X1)
     X2 = numpy.zeros((sizeTrData-math.ceil(sizeTrData/2), len(devAndTestSrcDict)), dtype=int)
     
-    for numLine, line in enumerate(open(trainFile, 'r')):
+    for numLine, line in enumerate(open(TRAIN_FILE, 'r')):
         
         if numLine >= math.ceil(sizeTrData/2):
             src, tgt = line.strip().split('|||')
@@ -89,12 +93,12 @@ def set_src_feat_vector():
 
 def train_dwl(targetWord):
     
-    global X, trainFile, sizeTrData
+    global X, TRAIN_FILE, sizeTrData
     
     Y = numpy.zeros((sizeTrData), dtype=int)
     shouldTrain = False
     
-    for lineNum, line in enumerate(open(trainFile, 'r')):
+    for lineNum, line in enumerate(open(TRAIN_FILE, 'r')):
         src, tgt = line.strip().split('|||')
         if targetWord in tgt.strip().split():
             shouldTrain = True
@@ -113,13 +117,11 @@ def train_dwl(targetWord):
 
 if __name__=='__main__':
     
-    global devAndTestSrcDict, trainFile
+    global devAndTestSrcDict
     
-    trainFile, devFile, testFile = sys.argv[1:]
-    
-    trainSrcDict, trainTgtDict = get_train_dicts(trainFile)
-    devSrcDict = get_dev_test_dicts(devFile)
-    testSrcDict = get_dev_test_dicts(testFile)
+    trainSrcDict, trainTgtDict = get_train_dicts(TRAIN_FILE)
+    devSrcDict = get_dev_test_dicts(DEV_FILE)
+    testSrcDict = get_dev_test_dicts(TEST_FILE)
     
     devAndTestSrcDict = {}
     for word in set(devSrcDict.keys()) | set(testSrcDict.keys()):
@@ -129,5 +131,6 @@ if __name__=='__main__':
     trainTargetWords = [key for key in trainTgtDict.keys() if trainTgtDict[key] > FREQ_CUTOFF]
     sys.stderr.write("Feature size: "+str(len(devAndTestSrcDict))+"\n")
     sys.stderr.write("Num target words: "+str(len(trainTargetWords))+"\n")
+    
     pool = mp.Pool(NUM_PROC, set_src_feat_vector)
     pool.map(train_dwl, trainTargetWords)
