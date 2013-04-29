@@ -23,13 +23,6 @@ for word in set(devSrcDict.keys()) | set(testSrcDict.keys()):
     if trainSrcDict[word]+devSrcDict[word]+testSrcDict[word] > FREQ_CUTOFF:
         devAndTestSrcDict[word] = len(devAndTestSrcDict)
 
-dwl = {}
-for fileName in os.listdir(MODELS_DIR):
-    word = fileName.replace('word_', '').replace('.pickle', '')
-    fileName = MODELS_DIR+fileName
-    word_clf = pickle.load(open(fileName, 'r'))
-    dwl[word] = word_clf
-
 # Returns the probability of occurrence of a phrase 
 # in the target given source words
 def get_dwl_score(srcWords, tgtPhrase):
@@ -41,10 +34,12 @@ def get_dwl_score(srcWords, tgtPhrase):
             
    phraseScore = 0.
    for word in tgtPhrase.split():
-       if word in dwl:
+       if word in trainTgtDict:
            try:
-               probs = dwl[word].predict_proba(X)
-               phraseScore += math.log(probs[0][1]) - math.log(probs[0][0])
+               fileName = MODELS_DIR+'word_'+word+'.pickle'
+               word_clf = pickle.load(open(fileName, 'r'))
+               probs = word_clf.predict_proba(X)
+               phraseScore += math.log(probs[0][1]) #- math.log(probs[0][0])
            except:
                pass
               
