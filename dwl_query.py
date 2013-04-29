@@ -9,9 +9,9 @@ from dwl import get_dev_test_dicts, get_train_dicts
 #in the training file
 
 FREQ_CUTOFF = 1
-TRAIN_FILE = 'data/news-commentary-v8.fr-en.joint.filt'
-DEV_FILE = 'data/newstest2011.fr.mixed'
-TEST_FILE = 'data/newstest2012.fr.mixed'
+TRAIN_FILE = 'data/test'#news-commentary-v8.fr-en.joint.filt'
+DEV_FILE = 'data/test'#newstest2011.fr.mixed'
+TEST_FILE = 'data/test'#newstest2012.fr.mixed'
 MODELS_DIR = 'data/models/'
 
 trainSrcDict, trainTgtDict = get_train_dicts(TRAIN_FILE)
@@ -35,13 +35,17 @@ def get_dwl_score(srcWords, tgtPhrase):
    phraseScore = 0.
    for word in tgtPhrase.split():
        if word in trainTgtDict:
-           try:
+            try:
                fileName = MODELS_DIR+'word_'+word+'.pickle'
                word_clf = pickle.load(open(fileName, 'r'))
                probs = word_clf.predict_proba(X)
                phraseScore += math.log(probs[0][1]) #- math.log(probs[0][0])
-           except:
-               pass
+            except:
+                pass
+       else:
+            #If the word is OOV return a very small probability
+            phraseScore += -10.
+            
               
    return phraseScore
    
