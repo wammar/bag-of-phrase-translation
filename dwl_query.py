@@ -10,9 +10,9 @@ from dwl import get_dev_test_dicts, get_train_dicts
 
 OOV_LOG_PROB = -10.
 FREQ_CUTOFF = 1
-TRAIN_FILE = 'data/test'#news-commentary-v8.fr-en.joint.filt'
-DEV_FILE = 'data/test'#newstest2011.fr.mixed'
-TEST_FILE = 'data/test'#newstest2012.fr.mixed'
+TRAIN_FILE = 'data/news-commentary-v8.fr-en.joint.filt'
+DEV_FILE = 'data/newstest2011.fr.mixed'
+TEST_FILE = 'data/newstest2012.fr.mixed'
 MODELS_DIR = 'data/models/'
 
 trainSrcDict, trainTgtDict = get_train_dicts(TRAIN_FILE)
