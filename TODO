@@ -1,0 +1,13 @@
+waleed:
++ bag of phrase translation
++ c++ reordering semiring implementation
++ remove identical hypotheses using a hash function
+- implement oracle bleu
+- build a moses system with the same training data
+- run experiments and compare results
+- 
+- add dwl scores as features
+- add unigram scores as features
+- tune feature weights
+- add conflicting words features (i.e. we don't want the same word to be generated twice from two consecutive source phrases). it sounds like a good idea to have a "repetition penalty" per target word, which is to be paid only when that word is repeated. for words like "the", the penalty should be fairly small. for words like "amazing", it should be high.
+-

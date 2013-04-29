@@ -1,7 +1,17 @@
 bag-of-phrase-translation
 =========================
 
+Main ideas
+----------
+-
+-
 
+Secondary ideas
+---------------
+- use unigram lm in bof_decode
+- use dwl in bof_decode
+- use a commutative hash function to avoid duplicate hypotheses
+- 
 
 Future work
 -----------

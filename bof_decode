@@ -5,19 +5,19 @@ import models
 import heapq
 import io
 from collections import namedtuple, defaultdict
+from hash_string import hash_string, hash_merge
 
-from dwl_query import get_dwl_score
+#from dwl_query import get_dwl_score
 
-Hypothesis = namedtuple('Hypothesis', 'logprob, from_src_pos, to_src_pos, tgt_phrase, left_child, right_child')
+Hypothesis = namedtuple('Hypothesis', 'logprob, from_src_pos, to_src_pos, tgt_phrase, left_child, right_child, hash')
 Node = namedtuple('Node', 'from_src_pos, to_src_pos, hyps')
 
 parser = argparse.ArgumentParser(description='Simple phrase based decoder.')
 parser.add_argument('-i', '--input', dest='input', default='data/input', help='File containing sentences to translate (default=data/input)')
-parser.add_argument('-o', '--output', dest='output', default='data/output_dwl', help='File containing sentences to translate (default=data/output)')
+parser.add_argument('-o', '--output', dest='output', default='data/output', help='File containing sentences to translate (default=data/output)')
 parser.add_argument('-t', '--translation-model', dest='tm', default='data/tm', help='File containing translation model (default=data/tm)')
-parser.add_argument('-s', '--stack-size', dest='s', default=1, type=int, help='Maximum stack size (default=1)')
-parser.add_argument('-kbest', '--kbest', dest='kbest', default=1, type=int, help='size of the kbest list')
-parser.add_argument('-n', '--num_sentences', dest='num_sents', default=sys.maxint, type=int, help='Number of sentences to decode (default=no limit)')
+parser.add_argument('-kbest', '--kbest', dest='kbest', default=10, type=int, help='size of the kbest list')
+parser.add_argument('-n', '--num_sentences', dest='num_sents', default=2, type=int, help='Number of sentences to decode (default=no limit)')
 parser.add_argument('-l', '--language-model', dest='lm', default='data/lm', help='File containing ARPA-format language model (default=data/lm)')
 parser.add_argument('-v', '--verbose', dest='verbose', action='store_true', default=False, help='Verbose mode (default=off)')
 opts = parser.parse_args()
@@ -72,12 +72,14 @@ for f in input_sents:
       
       # add phrase pairs to the hypotheses
       for phrase in tm[f[from_src_pos:to_src_pos]]:
-        tree[(from_src_pos, to_src_pos)].hyps.append( Hypothesis(logprob=phrase.logprob+get_dwl_score(f, phrase.english), 
+#        tree[(from_src_pos, to_src_pos)].hyps.append( Hypothesis(logprob=phrase.logprob+get_dwl_score(f, phrase.english), 
+        tree[(from_src_pos, to_src_pos)].hyps.append( Hypothesis(logprob=phrase.logprob, 
                                                                  from_src_pos=from_src_pos,
                                                                  to_src_pos=to_src_pos,
                                                                  tgt_phrase=phrase.english, 
                                                                  left_child=None, 
-                                                                 right_child=None))
+                                                                 right_child=None,
+                                                                 hash=hash_string(phrase.english)))
         
       # add an oov translation if necessary
       if span_len == 1 and len(tree[(from_src_pos, to_src_pos)].hyps) == 0:
@@ -86,10 +88,11 @@ for f in input_sents:
                                                                  to_src_pos=to_src_pos,
                                                                  tgt_phrase=f[from_src_pos],
                                                                  left_child=None,
-                                                                 right_child=None))
+                                                                 right_child=None,
+                                                                 hash=hash_string(f[from_src_pos])))
 
       # find the kbest synthetic hypotheses
-      synthetic_logprobs = set()
+      synthetic_hash_values=set()
       for mid_src_pos in range(from_src_pos + 1, to_src_pos):
         # for every way the current span can be split
         for left_hyp in tree[(from_src_pos, mid_src_pos)].hyps:
@@ -101,13 +104,13 @@ for f in input_sents:
                                  to_src_pos=to_src_pos,
                                  tgt_phrase=None,
                                  left_child=left_hyp,
-                                 right_child=right_hyp)
-            # TODO: it's a very bad practice to compare floating point numbers this way. 
-            # TODO: also, we shouldn't rely on the logprob to determine hypotheses similarity
-            if new_hyp.logprob not in synthetic_logprobs:
+                                 right_child=right_hyp,
+                                 hash=hash_merge(left_hyp.hash, right_hyp.hash))
+            # TODO: instead of relying on the hash value only to determine duplicates, you can also rely on the logprob, after quantization
+            if new_hyp.hash not in synthetic_hash_values:
               tree[(from_src_pos, to_src_pos)].hyps.append(new_hyp)
-              synthetic_logprobs.add(new_hyp.logprob)
-            
+              synthetic_hash_values.add(new_hyp.hash)
+              
       # now sort and prune
       tree[(from_src_pos, to_src_pos)].hyps.sort(reverse=True)
       sys.stderr.write(u'created {0} hyps before pruning...'.format( len(tree[(from_src_pos, to_src_pos)].hyps) ))
