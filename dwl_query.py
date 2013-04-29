@@ -8,6 +8,7 @@ from dwl import get_dev_test_dicts, get_train_dicts
 #Make sure the parameters here are excetly the same as
 #in the training file
 
+OOV_LOG_PROB = -10.
 FREQ_CUTOFF = 1
 TRAIN_FILE = 'data/test'#news-commentary-v8.fr-en.joint.filt'
 DEV_FILE = 'data/test'#newstest2011.fr.mixed'
@@ -44,7 +45,7 @@ def get_dwl_score(srcWords, tgtPhrase):
                 pass
        else:
             #If the word is OOV return a very small probability
-            phraseScore += -10.
+            phraseScore += OOV_LOG_PROB
             
               
    return phraseScore
