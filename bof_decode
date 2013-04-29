@@ -6,6 +6,7 @@ import heapq
 import io
 from collections import namedtuple, defaultdict
 from hash_string import hash_string, hash_merge
+from oracle_reordering import get_oracle_reordering
 
 #from dwl_query import get_dwl_score
 
@@ -13,8 +14,9 @@ Hypothesis = namedtuple('Hypothesis', 'logprob, from_src_pos, to_src_pos, tgt_ph
 Node = namedtuple('Node', 'from_src_pos, to_src_pos, hyps')
 
 parser = argparse.ArgumentParser(description='Simple phrase based decoder.')
-parser.add_argument('-i', '--input', dest='input', default='data/input', help='File containing sentences to translate (default=data/input)')
-parser.add_argument('-o', '--output', dest='output', default='data/output', help='File containing sentences to translate (default=data/output)')
+parser.add_argument('-i', '--input', dest='input', default='data/dev/newstest2011.fr.tok', help='File containing sentences to translate (default=data/input)')
+parser.add_argument('-r', '--ref', dest='ref', default='data/dev/newstest2011.en.tok', help='File containing reference translations')
+parser.add_argument('-o', '--output', dest='output', default='data/newstest2011.fr.bof', help='File containing sentences to translate (default=data/output)')
 parser.add_argument('-t', '--translation-model', dest='tm', default='data/tm', help='File containing translation model (default=data/tm)')
 parser.add_argument('-kbest', '--kbest', dest='kbest', default=10, type=int, help='size of the kbest list')
 parser.add_argument('-n', '--num_sentences', dest='num_sents', default=2, type=int, help='Number of sentences to decode (default=no limit)')
@@ -45,6 +47,7 @@ tm = models.TM(opts.tm, sys.maxint)
 #lm = models.LM(opts.lm)
 sys.stderr.write('Decoding %s...\n' % (opts.input,))
 input_sents = [tuple(line.strip().split()) for line in io.open(opts.input, encoding='utf8').readlines()[:opts.num_sents]]
+ref_sents = [tuple(line.strip().split(' ||| ')) for line in io.open(opts.ref, encoding='utf8').readlines()[:opts.num_sents]] if opts.ref != "None" else None
 output_file = io.open(opts.output, encoding='utf8', mode='w')
 
 sent_counter = 0
@@ -129,8 +132,11 @@ for f in input_sents:
     extract_phrase_bag(f, hyp, pieces)
     bof_translation = u'{0} ||| {1} ||| {2}\n'.format(sent_counter, hyp.logprob, ' ||| '.join(pieces))
     output_file.write(bof_translation)
-    sys.stderr.write(bof_translation)
-  
+    sys.stderr.write(bof_translation)  
+    if ref_sents:
+      best_reordering = get_oracle_reordering(pieces, ref_sents[sent_counter])
+      sys.stderr.write(best_reordering+u'\n')
+
   # advnce sent_counter
   sent_counter += 1
 
