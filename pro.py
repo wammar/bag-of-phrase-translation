@@ -1,6 +1,5 @@
 import argparse
 import numpy
-import bleu
 import pickle
 import numpy
 import sys
@@ -9,6 +8,7 @@ import math
 import features
 import rerank
 
+from bleu-manaal import bleu_pair
 from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import Ridge
 from operator import itemgetter
@@ -70,7 +70,7 @@ def get_training_set(kBestSents, tgtSents, srcSents, T, C):
         
         hyp1, feat1 = kBestSents[refNum][i]
         hyp2, feat2 = kBestSents[refNum][j]
-        delBleu = bleu.bleu_pair(hyp1, ref) - bleu.bleu_pair(hyp2, ref)
+        delBleu = bleu_pair(hyp1, ref) - bleu_pair(hyp2, ref)
         if abs(delBleu) < 0.05: continue
         
         mnPairDict[(refNum, i, j)] = delBleu
