@@ -1,0 +1,16 @@
+#!/bin/bash
+
+LM=data/nc.1.lm
+TM=data/tm
+SRC=data/dev/newstest2011.fr.tok.10
+REF=data/dev/newstest2011.en.tok.10
+SRC_REF=data/dev/newstest2011.fr-en.tok.10
+ORACLE_KBEST=data/oracle_kbest
+KBEST=10
+NCPU=1
+
+# generate the k-best oracle translations for each source sentence
+./bof_decode -i $SRC -r $REF -kbest $KBEST -ncpu $NCPU -oracleK $ORACLE_KBEST -t $TM -l $LM
+
+# tune feature weights with PRO
+python pro.py -src $SRC_REF -kbest $ORACLE_KBEST
