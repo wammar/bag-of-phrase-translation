@@ -33,7 +33,7 @@ def TM(filename, k, weights, testset=None):
         sys.stderr.write("done. ngrams count = {0}\n".format(len(testset_ngrams)))
         
     sys.stderr.write("Reading translation model from %s...\n" % (filename,))
-    tm = defaultdict(list)
+    tm = {}
     tm_size=0
     for line in io.open(filename, encoding='utf8'):
         (f, e, logprobs) = line.strip().split(" ||| ")
@@ -56,7 +56,10 @@ def TM(filename, k, weights, testset=None):
         fwd_lex = log(float(logprobs[3]))
         p = phrase(e, fwd, bwd, fwd_lex, bwd_lex)
         f_tuple = tuple(f_tokens)
-        tm[f_tuple].append(p)
+        if f_tuple in tm:
+            tm[f_tuple].append(p)
+        else:
+            tm[f_tuple] = [p]
         tm_size += 1
 
     for f in tm: # prune all but top k translations
