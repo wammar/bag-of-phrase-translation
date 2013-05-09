@@ -46,9 +46,12 @@ def get_dwl_score(srcWords, tgtPhrase):
        else:
             #If the word is OOV return a very small probability
             phraseScore += OOV_LOG_PROB
-            
               
    return phraseScore
    
 if __name__=='__main__':
-    print get_dwl_score('a b c d', '1')
+    srcPhrase = raw_input("Enter the source phrase: ")
+    
+    #while True:
+    targetWord = raw_input("Enter the target word: ")
+    print math.exp(get_dwl_score(srcPhrase.split(), targetWord))

@@ -13,7 +13,7 @@ LM_PATH = 'data/lm'
 #k-best outputs
 K = 5
 #number of parallel processes
-NUM_PROC = 2
+NUM_PROC = 1
 #number of best paths to try
 NUM_BEST_TRY = 1000000000
 
@@ -278,7 +278,9 @@ def return_rearranged_sentences(line):
     
 if __name__=='__main__':
     
-    lines = [line.strip() for line in sys.stdin]
+    #lines = [line.strip() for line in sys.stdin]
     
+    lines = ['0 ||| 0.1 ||| i ||| love ||| you ||| .']
+
     pool = mp.Pool(NUM_PROC)
     pool.map(return_rearranged_sentences, lines)
