@@ -129,6 +129,6 @@ if __name__ == '__main__':
     weights = model.coef_[0]
     weights /= math.sqrt((weights**2).sum() + 1e-6) # normalize weight vector
     sys.stderr.write('\n'+' '.join([str(round(w,4)) for w in weights])+'\n')
-    sys.stderr.write("Now reranking... ")
-    rerank.rerank(srcSents, tgtSents, kBestSents, weights)
-    sys.stderr.write(" Done\n")
+    #sys.stderr.write("Now reranking... ")
+    #rerank.rerank(srcSents, tgtSents, kBestSents, weights)
+    #sys.stderr.write(" Done\n")
