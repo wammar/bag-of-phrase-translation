@@ -230,7 +230,8 @@ if __name__=='__main__':
     
     NUM_PROC = 10
     #input sentence now contains (input_sent, sent_num)
-    input_sents = [(tuple(line.strip().split()), lineNum) for lineNum, line in enumerate(io.open(opts.input, encoding='utf8').readlines()[:opts.num_sents])]
+    #input_sents = [(tuple(line.strip().split()), lineNum) for lineNum, line in enumerate(io.open(opts.input, encoding='utf8').readlines()[:opts.num_sents])]
+    input_sents = [(tuple(line.strip().split()), lineNum) for lineNum, line in enumerate(io.open(opts.input, encoding='utf8').readlines()[:20])]
     
     pool = mp.Pool(NUM_PROC, initialise_global_vars)
     pool.map(translate, input_sents)

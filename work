@@ -1,0 +1,29 @@
+#!/bin/bash
+
+LM=data/nc.1.lm
+TM=data/tm
+SRC=data/dev/newstest2011.fr.tok.100
+REF=data/dev/newstest2011.en.tok.100
+SRC_REF=data/dev/newstest2011.fr-en.tok.100
+ORACLE_KBEST=data/oracle_kbest
+ORACLE_1BEST=data/oracle_1best
+KBEST=10
+NCPU=20
+PRO_SAMPLE_SIZE=5000
+PRO_TOP_N=50
+
+# generate the k-best oracle translations for each source sentence
+./bof_decode -i $SRC -r $REF -kbest $KBEST -ncpu $NCPU -oracleK $ORACLE_KBEST -t $TM -l $LM -oracle1 $ORACLE_1BEST \
+    -w_fwd 0.0151  -w_bwd -0.0773 -w_fwd_lex 0.1212 -w_bwd_lex -0.101 -w_dwl 0.0 -w_dwl_oov 0.0 -w_p_count 0.0 -w_t_count -0.4772 -w_1lm -0.8602 -w_rep 0.0357
+
+# 0.0075 bleu <=    -w_fwd -0.1304 -w_bwd -0.6232 -w_fwd_lex 0.3281 -w_bwd_lex 0.0782 -w_dwl 0.0 -w_dwl_oov 0 -w_p_count -1.0 -w_t_count 0.6021 -w_1lm -0.344 -w_rep -0.39
+# 0.0071 bleu  <=    -w_fwd 10      -w_bwd 0      -w_fwd_lex 5      -w_bwd_lex 0      -w_dwl 1   -w_dwl_oov 1   -w_p_count -10 -w_t_count 0      -w_1lm 10     -w_rep -10
+# 0.0165 bleu  <=    -w_fwd -0.1625 -w_bwd 0.3694 -w_fwd_lex 0.0363 -w_bwd_lex 0.1042 -w_dwl 0.0 -w_dwl_oov 0.0 -w_p_count 0.0 -w_t_count 0.7409 -w_1lm 0.3515 -w_rep -0.3906
+
+
+# compute bleu given the current weights
+python bleu.py -ref $REF -tgt $ORACLE_1BEST
+
+# tune feature weights with PRO
+python pro.py -src $SRC_REF -kbest $ORACLE_KBEST -t $PRO_SAMPLE_SIZE -n $PRO_TOP_N
+
