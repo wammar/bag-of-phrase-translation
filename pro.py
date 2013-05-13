@@ -8,7 +8,7 @@ import math
 import features
 import rerank
 
-from bleu-manaal import bleu_pair
+from bleu_manaal import bleu_pair
 from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import Ridge
 from operator import itemgetter
