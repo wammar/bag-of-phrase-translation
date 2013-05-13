@@ -1,0 +1,64 @@
+\begin{thebibliography}{}
+
+\bibitem[\protect\citename{Allauzen \bgroup et al.\egroup }2007]{openfst}
+C.~Allauzen, M.~Riley, J.~Schalkwyk, W.~Skut, and M.~Mohri.
+\newblock 2007.
+\newblock Open{F}st: A general and efficient weighted finite-state transducer
+  library.
+\newblock In {\em Proceedings of the Ninth International Conference on
+  Implementation and Application of Automata, (CIAA 2007)}, volume 4783 of {\em
+  Lecture Notes in Computer Science}, pages 11--23. Springer.
+\newblock {\tt http://www.openfst.org}.
+
+\bibitem[\protect\citename{Chiang}2007]{Chiang:2007:HPT:1268656.1268659}
+D.~Chiang.
+\newblock 2007.
+\newblock Hierarchical phrase-based translation.
+\newblock {\em Comput. Linguist.}, 33(2):201--228, June.
+
+\bibitem[\protect\citename{Hopkins and May}2011]{hopkins-may:2011:EMNLP}
+M.~Hopkins and J.~May.
+\newblock 2011.
+\newblock Tuning as ranking.
+\newblock In {\em Proceedings of the 2011 Conference on Empirical Methods in
+  Natural Language Processing}, pages 1352--1362, Edinburgh, Scotland, UK.,
+  July. Association for Computational Linguistics.
+
+\bibitem[\protect\citename{Koehn \bgroup et al.\egroup
+  }2003]{Koehn:2003:SPT:1073445.1073462}
+P.~Koehn, F.~J. Och, and D.~Marcu.
+\newblock 2003.
+\newblock Statistical phrase-based translation.
+\newblock In {\em Proceedings of the 2003 Conference of the North American
+  Chapter of the Association for Computational Linguistics on Human Language
+  Technology - Volume 1}, NAACL '03, pages 48--54, Stroudsburg, PA, USA.
+  Association for Computational Linguistics.
+
+\bibitem[\protect\citename{Mauser \bgroup et al.\egroup
+  }2009]{Mauser:2009:ESM:1699510.1699538}
+A.~Mauser, S.~Hasan, and H.~Ney.
+\newblock 2009.
+\newblock Extending statistical machine translation with discriminative and
+  trigger-based lexicon models.
+\newblock In {\em Proceedings of the 2009 Conference on Empirical Methods in
+  Natural Language Processing: Volume 1 - Volume 1}, EMNLP '09, pages 210--218,
+  Stroudsburg, PA, USA. Association for Computational Linguistics.
+
+\bibitem[\protect\citename{Och}2003]{Och:2003:MER:1075096.1075117}
+F.~J. Och.
+\newblock 2003.
+\newblock Minimum error rate training in statistical machine translation.
+\newblock In {\em Proceedings of the 41st Annual Meeting on Association for
+  Computational Linguistics - Volume 1}, ACL '03, pages 160--167, Stroudsburg,
+  PA, USA. Association for Computational Linguistics.
+
+\bibitem[\protect\citename{Papineni \bgroup et al.\egroup
+  }2002]{Papineni:2002:BMA:1073083.1073135}
+K.~Papineni, S.~Roukos, T.~Ward, and W.-J. Zhu.
+\newblock 2002.
+\newblock Bleu: a method for automatic evaluation of machine translation.
+\newblock In {\em Proceedings of the 40th Annual Meeting on Association for
+  Computational Linguistics}, ACL '02, pages 311--318, Stroudsburg, PA, USA.
+  Association for Computational Linguistics.
+
+\end{thebibliography}
