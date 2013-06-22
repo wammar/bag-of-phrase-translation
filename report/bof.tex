@@ -25,11 +25,11 @@
 
 \title{Bag-of-Phrases Machine Translation}
 
-\author{Waleed Ammar \and Manaal Faruqui\\
+\author{Manaal Faruqui \and Waleed Ammar\\
   Language Technologies Institute \\
   Carnegie Mellon University \\
   Pittsburgh, PA, 15213, USA \\
-  {\tt \{wammar, mfaruqui\}@cs.cmu.edu} 
+  {\tt \{mfaruqui, wammar\}@cs.cmu.edu} 
 }
 \date{}
 %\author{}
@@ -45,8 +45,8 @@ bag-of-phrase translation (b) phrase reordering. We then tune our bag-of-phrase 
 \end{abstract}
 
 \section{Introduction}
-Statistical machine translation (SMT) is a well research area that encompasses various ways of machine translation (MT)
-like phrase-based MT~\cite{Koehn:2003:SPT:1073445.1073462} and hierarchical phrase-based MT~\cite{Chiang:2007:HPT:1268656.1268659}.
+Statistical machine translation (SMT) is a well-studied research area that encompasses various approaches like 
+phrase-based MT~\cite{Koehn:2003:SPT:1073445.1073462} and hierarchical phrase-based MT~\cite{Chiang:2007:HPT:1268656.1268659}.
 These approaches to machine translation are the current state-of-the-art and are heavily used. Both of these approaches
 attempt to solve the problem of translation phrases in the source sentence to the target language and the reordering
 of these phrases in the target at the same time. This leads to an explosion of the hypothesis space and quickly
@@ -231,9 +231,6 @@ model for each target word making parallelization straightforward.
 For every word in the target vocabulary we train a Logistic Regression classifier with L2 regularization.
 Every sentecne in the training data is a training instance for the DWL of a given word.
 
-\section{Related Work}
-\label{sec:relatedWork}
-
 \section{Experiments}
 \label{sec:experiments}
 
@@ -241,15 +238,40 @@ Since, we did not have sufficient time to evaluate both parts of our translation
 the performance of our \textit{phrase translation} step. The performance of the reordering stage is dependent
 on the translation step and hence its important to make sure that the first step is working fine.
 
-For this, we implemented an \textit{oracle} reordering algorithm which returns the rearragement of the phrases
+For this, we implemented an \textit{oracle} reordering algorithm which greedily finds the rearragement of the phrases
 which results in the maximum BLEU score one can achieve for a given reference translation.
 
+We conducted experiments with two strong baseline systems (cdec and Moses) and two language pairs (French-English and Spanish-English). In both language pairs, we used the news commentary corpus for training, and used the fr-en WMT-12 and the es-en WMT-11 development sets for tuning. We use the phrasetable/grammar extracted from the baseline system and use it to build hypotheses in the bag-of-phrase decoder. Oracle results of the bag-of-phrase approach for the French-English task are summarized in Table~\ref{fren} (compared to Moses), and for the Spanish-English task are summarized in Table~\ref{esen} (compared to cdec). In section~\ref{sec:conclusions}, we discuss some of the reasons our bag-of-phrase decoder performs so poorly.
+
+\begin{table}
+    \begin{tabular}{ll}
+    Decoder       & BLEU \\
+    Moses         & 6.3  \\
+    bag-of-phrase & 1.6  \\
+    \end{tabular}
+\caption{\label{fren}French-English results.}
+\end{table}
+
+\begin{table}
+    \begin{tabular}{ll}
+    Decoder       & BLEU \\
+    cdec         & 25.9  \\
+    bag-of-phrase & 1.4  \\
+    \end{tabular}
+\caption{\label{esen}Spanish-English results.}
+\end{table}
 
 \section{Conclusions}
 \label{sec:conclusions}
+The bag-of-phrase oracle results in tables~\ref{fren} and \ref{esen} are the best results we obtained after a fair amount of analysis and feature engineering, which was very disappointing. We do not think the results we have obtained so far are conclusive, so further experiments must be done in order to have a better idea about the potential of this approach. Based on our analysis, the following points are the most likely causes of the poor performance:
+\begin{enumerate}
+\item The lack of $n$-gram language model features is a serious disadvantage of this approach. We used a few features to fill this gap, namely: unigram LM, DWL, and word repetition features. The unigram LM pushes the decoder towards hypotheses with more freuqent words. The DWL feature serves as an additional translation model of target given source, while the word repetition feature penalizes using the same word over and over in a hypothesis. Those features seem useful, but not sufficient. We think we need to have a measure of 'compatibility' among tokens in a hypothesis. For example, a model of how likely two tokens are to appear in the same sentence. Alternatively, we could use an $n$gram language model of the target language which is re-ordered to match the source language monotonically.
+\item Size of the K-best hypotheses is important. Using the one best hypothesis according to the bag-of-phrase decoder is a bad idea, because it may turn out that all arrangements of such hypothesis give a bad $n$-gram LM score, while a hypothesis which have a slightly worse score according to the bag-of-phrase decoder may have a reordering with a very good $n$-gram LM score. We did use K-best lists of up to 100 hypotheses, and it seems like larger K-best lists may be the way to go (at the expense of slower experiments). We came up with a greedy heuristic to make the runtime complexity for constructing the K-best list at each cell in the CYK algorithm sub-quadratic.
+\item We tune the features used in our model according to the oracle BLEU score using PRO. Oracle BLEU score of a bag-of-phrase hypothesis is the smoothed BLEU score for the reordering which best matches one of the references. We use a greedy algorithm to find the best match, which sometimes fail to do so (i.e. produces a suboptimal reordering).
+\item More feature engineering is needed. 
+\end{enumerate}
 
 \section{Future Work}
-
 Though our reordering model seems exact for a given $n$-gram model, it is not so. The way we define the $\oplus$ operator
 in our semiring allows us to compare two partially constructed hypotheses which have translated different source phrases
 and are hence not stricly comparable. Thus, with the score of the partially translated hypotheses we could also include
